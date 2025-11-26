@@ -6,6 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "../store/authStore";
 
 const registerSchema = z
@@ -14,6 +15,7 @@ const registerSchema = z
     email: z.string().email("Enter a valid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    role: z.enum(["user", "admin"], { required_error: "Please select a role" }),
   })
   .refine((v) => v.password === v.confirmPassword, {
     path: ["confirmPassword"],
@@ -28,13 +30,13 @@ export default function Register() {
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "", role: "user" },
     mode: "onSubmit",
   });
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      await registerUser(data.name, data.email, data.password);
+      await registerUser(data.name, data.email, data.password, data.role);
       nav("/login"); // go to login after successful register
     } catch (err: any) {
       // Show backend error at top of form (and keep field errors if any)
@@ -82,6 +84,28 @@ export default function Register() {
                   <FormControl>
                     <Input type="email" placeholder="Enter your email" disabled={loading} {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

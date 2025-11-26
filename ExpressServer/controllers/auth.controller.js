@@ -26,16 +26,16 @@ export async function register(req, res) {
     if (existing) return res.status(409).json({ message: "Email already registered" });
 
     const passwordHash = await bcrypt.hash(parsed.password, 10);
-    console.log("Creating user with data:", { name: parsed.name, email: parsed.email });
+    console.log("Creating user with data:", { name: parsed.name, email: parsed.email, role: parsed.role });
     
-    const user = await User.create({ name: parsed.name, email: parsed.email, passwordHash });
+    const user = await User.create({ name: parsed.name, email: parsed.email, passwordHash, role: parsed.role || "user" });
     console.log("User created successfully:", user._id);
 
     const token = signToken({ sub: user._id, email: user.email });
     setAuthCookie(res, token);
 
     res.status(201).json({
-      user: { id: user._id, name: user.name, email: user.email, profileImage: user.profileImage },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, profileImage: user.profileImage },
       token,
     });
   } catch (err) {
@@ -66,11 +66,11 @@ export async function login(req, res) {
     }
 
     console.log("Login successful for:", user.email);
-    const token = signToken({ sub: user._id, email: user.email });
+    const token = signToken({ sub: user._id, email: user.email  ,role: user.role, profileImage: user.profileImage  });
     setAuthCookie(res, token);
 
     res.json({
-      user: { id: user._id, name: user.name, email: user.email, profileImage: user.profileImage },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, profileImage: user.profileImage },
       token,
     });
   } catch (err) {
@@ -90,6 +90,7 @@ export async function me(req, res) {
         id: user._id, 
         name: user.name, 
         email: user.email,
+        role: user.role,
         profileImage: user.profileImage
       }
     });
@@ -128,6 +129,7 @@ export async function updateProfile(req, res) {
         id: updatedUser._id, 
         name: updatedUser.name, 
         email: updatedUser.email,
+        role: updatedUser.role,
         profileImage: updatedUser.profileImage
       }
     });
